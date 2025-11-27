@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>هندبيش | HindPesh</title>
+    <link rel="icon" type="image/png" href="/logo.png" />
+    
+    <!-- Google Fonts: Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              // Primary Brand Colors (High Contrast)
+              'brand-blue': '#0ea5e9',      // Sky 500 - Main action color
+              'brand-blue-hover': '#0284c7', // Sky 600 - Hover state
+              'brand-blue-light': '#e0f2fe', // Sky 100 - Light backgrounds
+              
+              // Secondary Colors
+              'brand-secondary': '#afafaf',   // Requested Secondary Color
+              'secondary-gray': '#f1f5f9',    // Slate 100 - Secondary Background
+              'darker-white': '#e2e8f0',      // Slate 200 - Darker White
+              
+              // Greys (Text & Borders)
+              'brand-grey': '#64748b',       // Slate 500 - Secondary text
+              'brand-grey-dark': '#334155',  // Slate 700 - Primary text in light mode
+              'brand-grey-light': '#afafaf', // Using requested secondary color for visible borders
+              
+              // Backgrounds
+              'bg-main': '#f1f5f9',          // Slate 100 (Light Mode Page Bg)
+              'bg-surface': '#ffffff',       // Pure White (Card Bg)
+              'bg-dark': '#0f172a',          // Slate 900 (Dark Mode Bg)
+              'bg-card-dark': '#1e293b',     // Slate 800 (Dark Mode Card)
+            },
+            fontFamily: {
+              sans: ['Cairo', 'sans-serif'],
+            },
+            // Custom shadows with higher opacity for better visibility in light mode
+            boxShadow: {
+              'sm': '0 1px 3px 0 rgb(0 0 0 / 0.15), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+              'DEFAULT': '0 1px 3px 0 rgb(0 0 0 / 0.15), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+              'md': '0 4px 6px -1px rgb(0 0 0 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+              'lg': '0 10px 15px -3px rgb(0 0 0 / 0.15), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+              'xl': '0 20px 25px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+              '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.3)',
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      /* Custom scrollbar for a cleaner look */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1; 
+      }
+      .dark ::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #0ea5e9; 
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #0284c7; 
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-bg-main dark:bg-bg-dark text-slate-800 dark:text-slate-100 font-sans antialiased min-h-screen transition-colors duration-300">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
