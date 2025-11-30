@@ -26,7 +26,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     setTimeout(() => {
       // Hardcoded check for demonstration - mimicking the "password as hash key" concept
       // In a real Django app, you send the password, backend verifies the hash.
-      if (username === 'admin' && password === 'admin123') {
+      if (username === 'admin' && password === 'admin1234') {
         const mockToken = "django-insecure-mock-token-12345";
         onLogin(mockToken);
         navigate('/hind-admin-portal'); // Redirect to the special link

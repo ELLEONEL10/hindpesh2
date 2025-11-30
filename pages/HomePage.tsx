@@ -9,19 +9,11 @@ const HomePage: React.FC = () => {
       <section className="bg-white dark:bg-bg-card-dark border-b border-brand-grey-light dark:border-gray-800 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
            <div className="inline-flex items-center justify-center p-4 bg-brand-blue-light dark:bg-sky-900/30 rounded-full mb-6">
-              <svg 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                className="w-16 h-16 text-brand-blue dark:text-sky-400"
-                strokeWidth="1.5" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-              >
-                <path d="M12 22c4.97 0 9-4.03 9-9 0-4.97-9-13-9-13S3 8.03 3 13c0 4.97 4.03 9 9 9z" />
-                <path d="M12 13a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
-                <path d="M12 22v-9" />
-              </svg>
+              <img 
+                src="/favico.png" 
+                alt="HindPesh Logo" 
+                className="w-16 h-16 object-contain"
+              />
            </div>
           <h1 className="text-4xl md:text-5xl font-extrabold text-brand-grey-dark dark:text-white mb-4">
             {APP_NAME_AR}
