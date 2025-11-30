@@ -3,10 +3,15 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
-from .models import Lesson
-from .serializers import LessonSerializer
+from .models import Lesson, AudioFile, PDFFile
+from .serializers import (
+    LessonSerializer, 
+    AudioFileSerializer, 
+    PDFFileSerializer,
+    AudioFileCreateSerializer,
+    PDFFileCreateSerializer
+)
 
 
 class LessonViewSet(viewsets.ModelViewSet):
@@ -39,6 +44,26 @@ class LessonViewSet(viewsets.ModelViewSet):
         if self.request.user.is_authenticated:
             return Lesson.objects.all()
         return Lesson.objects.filter(is_active=True)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def add_audio(self, request, pk=None):
+        """Add an audio file to a lesson"""
+        lesson = self.get_object()
+        serializer = AudioFileCreateSerializer(data={**request.data, 'lesson': lesson.id})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def add_pdf(self, request, pk=None):
+        """Add a PDF file to a lesson"""
+        lesson = self.get_object()
+        serializer = PDFFileCreateSerializer(data={**request.data, 'lesson': lesson.id})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def login(self, request):
@@ -82,3 +107,28 @@ class LessonViewSet(viewsets.ModelViewSet):
             'is_staff': request.user.is_staff
         })
 
+
+class AudioFileViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing audio files"""
+    queryset = AudioFile.objects.all()
+    serializer_class = AudioFileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        lesson_id = self.request.query_params.get('lesson', None)
+        if lesson_id:
+            return AudioFile.objects.filter(lesson_id=lesson_id)
+        return AudioFile.objects.all()
+
+
+class PDFFileViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing PDF files"""
+    queryset = PDFFile.objects.all()
+    serializer_class = PDFFileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        lesson_id = self.request.query_params.get('lesson', None)
+        if lesson_id:
+            return PDFFile.objects.filter(lesson_id=lesson_id)
+        return PDFFile.objects.all()

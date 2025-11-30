@@ -15,7 +15,7 @@ Django REST Framework backend for the HindPesh educational platform.
 
 3. **Install dependencies:**
    ```bash
-   pip install -r requirements.txt
+   
    ```
 
 4. **Create `.env` file:**

@@ -25,14 +25,37 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, title }) => {
     const setAudioTime = () => setCurrentTime(audio.currentTime);
     const onEnded = () => setIsPlaying(false);
 
+    const handleError = (e: Event) => {
+      console.error('Audio loading error:', e);
+      const error = audio.error;
+      if (error) {
+        switch (error.code) {
+          case error.MEDIA_ERR_ABORTED:
+            console.error('Audio playback aborted');
+            break;
+          case error.MEDIA_ERR_NETWORK:
+            console.error('Network error while loading audio');
+            break;
+          case error.MEDIA_ERR_DECODE:
+            console.error('Audio decoding error');
+            break;
+          case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+            console.error('Audio source not supported or CORS issue');
+            break;
+        }
+      }
+    };
+
     audio.addEventListener('loadeddata', setAudioData);
     audio.addEventListener('timeupdate', setAudioTime);
     audio.addEventListener('ended', onEnded);
+    audio.addEventListener('error', handleError);
 
     return () => {
       audio.removeEventListener('loadeddata', setAudioData);
       audio.removeEventListener('timeupdate', setAudioTime);
       audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('error', handleError);
     }
   }, []);
 
@@ -67,9 +90,40 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, title }) => {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
+  // Handle audio loading errors
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleError = (e: Event) => {
+      console.error('Audio loading error:', e);
+      // Try alternative URL format if the first one fails
+      if (src && src.includes('drive.google.com')) {
+        const fileId = src.match(/[?&]id=([a-zA-Z0-9_-]+)/)?.[1] || src.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1];
+        if (fileId) {
+          // Try alternative format
+          const altUrl = `https://docs.google.com/uc?export=download&id=${fileId}`;
+          if (audio.src !== altUrl) {
+            audio.src = altUrl;
+          }
+        }
+      }
+    };
+
+    audio.addEventListener('error', handleError);
+    return () => {
+      audio.removeEventListener('error', handleError);
+    };
+  }, [src]);
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-brand-grey-light dark:border-gray-600 p-4 w-full transition-colors duration-300">
-      <audio ref={audioRef} src={src} preload="metadata" />
+      <audio 
+        ref={audioRef} 
+        src={src} 
+        preload="metadata"
+        crossOrigin="anonymous"
+      />
       
       <div className="flex items-center gap-4">
         {/* Play/Pause Button */}

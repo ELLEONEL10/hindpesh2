@@ -1,6 +1,8 @@
-import { Lesson, LessonAPIResponse } from '../types';
+import { Lesson, LessonAPIResponse, AudioFile, AudioFileAPIResponse, PDFFile, PDFFileAPIResponse } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// Use environment variable or default to relative path (works with Vite proxy)
+// In production, set VITE_API_URL to your API domain
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Get authentication token from localStorage
 const getAuthToken = (): string | null => {
@@ -8,6 +10,26 @@ const getAuthToken = (): string | null => {
 };
 
 // Helper function to convert API response (snake_case) to frontend format (camelCase)
+const mapAudioFileFromAPI = (apiAudio: AudioFileAPIResponse): AudioFile => {
+  return {
+    id: apiAudio.id,
+    title: apiAudio.title,
+    google_drive_link: apiAudio.google_drive_link,
+    order: apiAudio.order,
+    created_at: apiAudio.created_at,
+  };
+};
+
+const mapPDFFileFromAPI = (apiPDF: PDFFileAPIResponse): PDFFile => {
+  return {
+    id: apiPDF.id,
+    title: apiPDF.title,
+    google_drive_link: apiPDF.google_drive_link,
+    order: apiPDF.order,
+    created_at: apiPDF.created_at,
+  };
+};
+
 const mapLessonFromAPI = (apiLesson: LessonAPIResponse): Lesson => {
   return {
     id: apiLesson.id.toString(),
@@ -15,13 +37,13 @@ const mapLessonFromAPI = (apiLesson: LessonAPIResponse): Lesson => {
     title: apiLesson.title,
     description: apiLesson.description,
     youtubeId: apiLesson.youtube_id || '',
-    audioFileId: apiLesson.audio_file_id || '',
-    pdfFileId: apiLesson.pdf_file_id || '',
     duration: apiLesson.duration,
     thumbnail: apiLesson.thumbnail,
     is_active: apiLesson.is_active,
     created_at: apiLesson.created_at,
     updated_at: apiLesson.updated_at,
+    audioFiles: (apiLesson.audio_files || []).map(mapAudioFileFromAPI),
+    pdfFiles: (apiLesson.pdf_files || []).map(mapPDFFileFromAPI),
   };
 };
 
@@ -47,6 +69,14 @@ const apiRequest = async <T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Network error' }));
+    
+    // Handle authentication errors specifically
+    if (response.status === 401) {
+      // Clear invalid token
+      localStorage.removeItem('authToken');
+      throw new Error(error.detail || error.error || 'Invalid token. Please login again.');
+    }
+    
     throw new Error(error.error || error.detail || `HTTP error! status: ${response.status}`);
   }
 
@@ -88,7 +118,7 @@ export const lessonsAPI = {
   },
 
   // Create a new lesson (authenticated)
-  create: async (lesson: Omit<Lesson, 'id' | 'created_at' | 'updated_at' | 'is_active'>): Promise<Lesson> => {
+  create: async (lesson: Omit<Lesson, 'id' | 'created_at' | 'updated_at' | 'is_active' | 'audioFiles' | 'pdfFiles'>): Promise<Lesson> => {
     const apiLesson = await apiRequest<LessonAPIResponse>('/lessons/', {
       method: 'POST',
       body: JSON.stringify({
@@ -96,8 +126,6 @@ export const lessonsAPI = {
         title: lesson.title,
         description: lesson.description,
         youtube_id: lesson.youtubeId,
-        audio_file_id: lesson.audioFileId,
-        pdf_file_id: lesson.pdfFileId,
         duration: lesson.duration,
         thumbnail: lesson.thumbnail,
         is_active: true,
@@ -113,8 +141,6 @@ export const lessonsAPI = {
     if (lesson.title !== undefined) updateData.title = lesson.title;
     if (lesson.description !== undefined) updateData.description = lesson.description;
     if (lesson.youtubeId !== undefined) updateData.youtube_id = lesson.youtubeId;
-    if (lesson.audioFileId !== undefined) updateData.audio_file_id = lesson.audioFileId;
-    if (lesson.pdfFileId !== undefined) updateData.pdf_file_id = lesson.pdfFileId;
     if (lesson.duration !== undefined) updateData.duration = lesson.duration;
     if (lesson.thumbnail !== undefined) updateData.thumbnail = lesson.thumbnail;
     if (lesson.is_active !== undefined) updateData.is_active = lesson.is_active;
@@ -124,6 +150,44 @@ export const lessonsAPI = {
       body: JSON.stringify(updateData),
     });
     return mapLessonFromAPI(apiLesson);
+  },
+
+  // Add audio file to lesson
+  addAudioFile: async (lessonId: string, audioFile: { title: string; google_drive_link: string; order?: number }): Promise<AudioFile> => {
+    return apiRequest<AudioFileAPIResponse>(`/lessons/${lessonId}/add_audio/`, {
+      method: 'POST',
+      body: JSON.stringify({
+        title: audioFile.title,
+        google_drive_link: audioFile.google_drive_link,
+        order: audioFile.order || 0,
+      }),
+    });
+  },
+
+  // Add PDF file to lesson
+  addPDFFile: async (lessonId: string, pdfFile: { title: string; google_drive_link: string; order?: number }): Promise<PDFFile> => {
+    return apiRequest<PDFFileAPIResponse>(`/lessons/${lessonId}/add_pdf/`, {
+      method: 'POST',
+      body: JSON.stringify({
+        title: pdfFile.title,
+        google_drive_link: pdfFile.google_drive_link,
+        order: pdfFile.order || 0,
+      }),
+    });
+  },
+
+  // Delete audio file
+  deleteAudioFile: async (audioFileId: number): Promise<void> => {
+    await apiRequest(`/audio-files/${audioFileId}/`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Delete PDF file
+  deletePDFFile: async (pdfFileId: number): Promise<void> => {
+    await apiRequest(`/pdf-files/${pdfFileId}/`, {
+      method: 'DELETE',
+    });
   },
 
   // Delete a lesson (authenticated)

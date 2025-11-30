@@ -1,10 +1,28 @@
 from rest_framework import serializers
-from .models import Lesson
+from .models import Lesson, AudioFile, PDFFile
+
+
+class AudioFileSerializer(serializers.ModelSerializer):
+    """Serializer for AudioFile model"""
+    class Meta:
+        model = AudioFile
+        fields = ['id', 'title', 'google_drive_link', 'order', 'created_at']
+        read_only_fields = ['created_at']
+
+
+class PDFFileSerializer(serializers.ModelSerializer):
+    """Serializer for PDFFile model"""
+    class Meta:
+        model = PDFFile
+        fields = ['id', 'title', 'google_drive_link', 'order', 'created_at']
+        read_only_fields = ['created_at']
 
 
 class LessonSerializer(serializers.ModelSerializer):
     """Serializer for Lesson model"""
     id = serializers.IntegerField(read_only=True)
+    audio_files = AudioFileSerializer(many=True, read_only=True)
+    pdf_files = PDFFileSerializer(many=True, read_only=True)
     
     class Meta:
         model = Lesson
@@ -14,13 +32,13 @@ class LessonSerializer(serializers.ModelSerializer):
             'title',
             'description',
             'youtube_id',
-            'audio_file_id',
-            'pdf_file_id',
             'duration',
             'thumbnail',
             'created_at',
             'updated_at',
             'is_active',
+            'audio_files',
+            'pdf_files',
         ]
         read_only_fields = ['created_at', 'updated_at']
 
@@ -34,3 +52,16 @@ class LessonSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("A lesson with this number already exists.")
         return value
 
+
+class AudioFileCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating AudioFile"""
+    class Meta:
+        model = AudioFile
+        fields = ['lesson', 'title', 'google_drive_link', 'order']
+
+
+class PDFFileCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating PDFFile"""
+    class Meta:
+        model = PDFFile
+        fields = ['lesson', 'title', 'google_drive_link', 'order']

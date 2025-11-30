@@ -16,16 +16,6 @@ class Lesson(models.Model):
         blank=True,
         help_text="YouTube video ID (not full URL)"
     )
-    audio_file_id = models.CharField(
-        max_length=200,
-        blank=True,
-        help_text="Google Drive Audio File ID"
-    )
-    pdf_file_id = models.CharField(
-        max_length=200,
-        blank=True,
-        help_text="Google Drive PDF File ID"
-    )
     duration = models.CharField(
         max_length=20,
         default="00:00",
@@ -51,3 +41,63 @@ class Lesson(models.Model):
     def __str__(self):
         return f"Lesson {self.number}: {self.title}"
 
+
+class AudioFile(models.Model):
+    """Model for storing audio file links (Google Drive)"""
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.CASCADE,
+        related_name='audio_files',
+        help_text="The lesson this audio file belongs to"
+    )
+    title = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Optional title for the audio file"
+    )
+    google_drive_link = models.URLField(
+        help_text="Full Google Drive shareable link to the audio file"
+    )
+    order = models.PositiveIntegerField(
+        default=0,
+        help_text="Order of display (lower numbers appear first)"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['lesson', 'order', 'created_at']
+        verbose_name = "Audio File"
+        verbose_name_plural = "Audio Files"
+
+    def __str__(self):
+        return f"Audio: {self.lesson.title} - {self.title or 'Untitled'}"
+
+
+class PDFFile(models.Model):
+    """Model for storing PDF file links (Google Drive)"""
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.CASCADE,
+        related_name='pdf_files',
+        help_text="The lesson this PDF file belongs to"
+    )
+    title = models.CharField(
+        max_length=200,
+        help_text="Title/name of the PDF file"
+    )
+    google_drive_link = models.URLField(
+        help_text="Full Google Drive shareable link to the PDF file"
+    )
+    order = models.PositiveIntegerField(
+        default=0,
+        help_text="Order of display (lower numbers appear first)"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['lesson', 'order', 'created_at']
+        verbose_name = "PDF File"
+        verbose_name_plural = "PDF Files"
+
+    def __str__(self):
+        return f"PDF: {self.lesson.title} - {self.title}"
