@@ -1,24 +1,54 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Download, FileText, Info } from 'lucide-react';
-import { MOCK_LESSONS } from '../constants';
+import { lessonsAPI } from '../services/api';
+import { Lesson } from '../types';
 import AudioPlayer from '../components/AudioPlayer';
 
 const LessonDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const lesson = MOCK_LESSONS.find((l) => l.id === id);
+  const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Scroll to top on mount
     window.scrollTo(0, 0);
+    
+    const fetchLesson = async () => {
+      if (!id) return;
+      try {
+        setIsLoading(true);
+        const fetchedLesson = await lessonsAPI.getById(id);
+        setLesson(fetchedLesson);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'فشل تحميل الدرس');
+        console.error('Error fetching lesson:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLesson();
   }, [id]);
 
-  if (!lesson) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-brand-blue border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (error || !lesson) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center dark:text-white">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">الدرس غير موجود</h2>
-        <p className="text-brand-grey dark:text-gray-400 mb-6">عذراً، لم نتمكن من العثور على الدرس الذي تبحث عنه.</p>
+        <p className="text-brand-grey dark:text-gray-400 mb-6">
+          {error || 'عذراً، لم نتمكن من العثور على الدرس الذي تبحث عنه.'}
+        </p>
         <button 
           onClick={() => navigate('/')}
           className="px-6 py-3 bg-brand-blue text-white rounded-lg hover:bg-brand-blue-hover transition-colors font-bold"

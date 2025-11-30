@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, ShieldCheck, AlertCircle } from 'lucide-react';
 import { APP_NAME_AR } from '../constants';
+import { authAPI } from '../services/api';
 
 interface LoginPageProps {
   onLogin: (token: string) => void;
@@ -19,22 +20,17 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     setError('');
     setIsLoading(true);
 
-    // Simulation of Django Authentication
-    // In production, this would be: 
-    // const res = await fetch('/api/token/', { method: 'POST', body: ... })
-    
-    setTimeout(() => {
-      // Hardcoded check for demonstration - mimicking the "password as hash key" concept
-      // In a real Django app, you send the password, backend verifies the hash.
-      if (username === 'admin' && password === 'admin1234') {
-        const mockToken = "django-insecure-mock-token-12345";
-        onLogin(mockToken);
-        navigate('/hind-admin-portal'); // Redirect to the special link
-      } else {
-        setError('اسم المستخدم أو كلمة المرور غير صحيحة');
-      }
+    try {
+      // Call Django backend API for authentication
+      // Django automatically handles password hashing and verification
+      const response = await authAPI.login(username, password);
+      onLogin(response.token);
+      navigate('/hind-admin-portal');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'اسم المستخدم أو كلمة المرور غير صحيحة');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (

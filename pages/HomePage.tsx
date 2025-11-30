@@ -1,8 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import LessonCard from '../components/LessonCard';
-import { MOCK_LESSONS, SLOGAN, APP_NAME_AR } from '../constants';
+import { SLOGAN, APP_NAME_AR } from '../constants';
+import { lessonsAPI } from '../services/api';
+import { Lesson } from '../types';
 
 const HomePage: React.FC = () => {
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchLessons = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedLessons = await lessonsAPI.getAll();
+        setLessons(fetchedLessons);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'فشل تحميل الدروس');
+        console.error('Error fetching lessons:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLessons();
+  }, []);
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -32,15 +56,31 @@ const HomePage: React.FC = () => {
             فهرس المحتويات
           </h2>
           <span className="text-brand-grey dark:text-gray-500 text-sm font-semibold">
-            {MOCK_LESSONS.length} دروس متاحة
+            {isLoading ? 'جاري التحميل...' : error ? 'خطأ' : `${lessons.length} دروس متاحة`}
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {MOCK_LESSONS.map((lesson) => (
-            <LessonCard key={lesson.id} lesson={lesson} />
-          ))}
-        </div>
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 p-4 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="w-8 h-8 border-4 border-brand-blue border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : lessons.length === 0 ? (
+          <div className="text-center py-12 text-brand-grey dark:text-gray-400">
+            لا توجد دروس متاحة حالياً
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {lessons.map((lesson) => (
+              <LessonCard key={lesson.id} lesson={lesson} />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
