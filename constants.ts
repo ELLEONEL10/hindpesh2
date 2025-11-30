@@ -54,6 +54,6 @@ export const MOCK_LESSONS: Lesson[] = [
   },
 ];
 
-export const APP_NAME_AR = "هندبيش";
+export const APP_NAME_AR = "پيش هند";
 export const APP_NAME_EN = "HindPesh";
 export const SLOGAN = "منصتك التفاعلية لتعلم العربية";
