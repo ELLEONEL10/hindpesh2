@@ -154,3 +154,4 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
