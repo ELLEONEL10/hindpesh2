@@ -1,13 +1,54 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import LessonCard from '../components/LessonCard';
 import { SLOGAN, APP_NAME_AR } from '../constants';
 import { lessonsAPI } from '../services/api';
 import { Lesson } from '../types';
+import { useAuth } from '../context/AuthContext';
 
-const HomePage: React.FC = () => {
+interface HomePageProps {
+  searchTerm?: string;
+}
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+};
+
+const HomePage: React.FC<HomePageProps> = ({ searchTerm = '' }) => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, token } = useAuth();
+  const [completedLessons, setCompletedLessons] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    if (user && token) {
+      fetch('http://localhost:8000/api/progress/', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const completed = new Set(data.filter((p: any) => p.is_completed).map((p: any) => p.lesson));
+          setCompletedLessons(completed);
+        }
+      })
+      .catch(err => console.error('Error fetching progress:', err));
+    } else {
+      setCompletedLessons(new Set());
+    }
+  }, [user, token]);
 
   useEffect(() => {
     const fetchLessons = async () => {
@@ -27,24 +68,72 @@ const HomePage: React.FC = () => {
     fetchLessons();
   }, []);
 
+  const filteredLessons = lessons.filter(lesson => 
+    lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (lesson.description && lesson.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-white dark:bg-bg-card-dark border-b border-brand-grey-light dark:border-gray-800 transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
-           <div className="inline-flex items-center justify-center p-4 bg-brand-blue-light dark:bg-sky-900/30 rounded-full mb-6">
+      <section className="relative bg-white dark:bg-bg-card-dark border-b border-brand-grey-light dark:border-gray-800 transition-colors duration-300 overflow-hidden">
+        {/* Background Graphic */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 opacity-10 pointer-events-none">
+           <motion.div 
+             animate={{ 
+               scale: [1, 1.2, 1],
+               rotate: [0, 90, 0],
+             }}
+             transition={{ 
+               duration: 20,
+               repeat: Infinity,
+               ease: "linear" 
+             }}
+             className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-brand-blue blur-3xl"
+           />
+           <motion.div 
+             animate={{ 
+               scale: [1, 1.5, 1],
+               x: [0, 50, 0],
+             }}
+             transition={{ 
+               duration: 15,
+               repeat: Infinity,
+               ease: "easeInOut" 
+             }}
+             className="absolute top-1/2 -left-24 w-64 h-64 rounded-full bg-purple-500 blur-3xl"
+           />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
+           <motion.div 
+             initial={{ scale: 0 }}
+             animate={{ scale: 1 }}
+             transition={{ type: "spring", stiffness: 260, damping: 20 }}
+             className="inline-flex items-center justify-center p-4 bg-brand-blue-light dark:bg-sky-900/30 rounded-full mb-6"
+           >
               <img 
                 src="/favico.png" 
                 alt="HindPesh Logo" 
                 className="w-16 h-16 object-contain"
               />
-           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold text-brand-grey-dark dark:text-white mb-4">
+           </motion.div>
+          <motion.h1 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-4xl md:text-5xl font-extrabold text-brand-grey-dark dark:text-white mb-4"
+          >
             {APP_NAME_AR}
-          </h1>
-          <p className="text-xl md:text-2xl text-brand-grey dark:text-gray-400 font-medium max-w-2xl mx-auto">
+          </motion.h1>
+          <motion.p 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="text-xl md:text-2xl text-brand-grey dark:text-gray-400 font-medium max-w-2xl mx-auto"
+          >
             {SLOGAN}
-          </p>
+          </motion.p>
         </div>
       </section>
 
@@ -56,7 +145,7 @@ const HomePage: React.FC = () => {
             فهرس المحتويات
           </h2>
           <span className="text-brand-grey dark:text-gray-500 text-sm font-semibold">
-            {isLoading ? 'جاري التحميل...' : error ? 'خطأ' : `${lessons.length} دروس متاحة`}
+            {isLoading ? 'جاري التحميل...' : error ? 'خطأ' : `${filteredLessons.length} دروس متاحة`}
           </span>
         </div>
 
@@ -71,16 +160,26 @@ const HomePage: React.FC = () => {
           <div className="flex justify-center items-center py-12">
             <div className="w-8 h-8 border-4 border-brand-blue border-t-transparent rounded-full animate-spin"></div>
           </div>
-        ) : lessons.length === 0 ? (
+        ) : filteredLessons.length === 0 ? (
           <div className="text-center py-12 text-brand-grey dark:text-gray-400">
-            لا توجد دروس متاحة حالياً
+            {searchTerm ? 'لا توجد نتائج للبحث' : 'لا توجد دروس متاحة حالياً'}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {lessons.map((lesson) => (
-              <LessonCard key={lesson.id} lesson={lesson} />
+          <motion.div 
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {filteredLessons.map((lesson) => (
+              <motion.div key={lesson.id} variants={item}>
+                <LessonCard 
+                  lesson={lesson} 
+                  isCompleted={completedLessons.has(Number(lesson.id))}
+                />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </section>
     </div>

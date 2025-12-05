@@ -1,19 +1,30 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { PlayCircle, FileText, Music, ChevronLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { PlayCircle, FileText, Music, ChevronLeft, CheckCircle } from 'lucide-react';
 import { Lesson } from '../types';
 
 interface LessonCardProps {
   lesson: Lesson;
+  isCompleted?: boolean;
 }
 
-const LessonCard: React.FC<LessonCardProps> = ({ lesson }) => {
+const LessonCard: React.FC<LessonCardProps> = ({ lesson, isCompleted }) => {
   return (
-    <Link 
-      to={`/lesson/${lesson.id}`}
-      className="group bg-bg-surface dark:bg-bg-card-dark rounded-2xl border border-darker-white dark:border-gray-700 shadow-sm hover:shadow-xl hover:border-brand-blue/30 dark:hover:border-sky-500/30 transition-all duration-300 overflow-hidden flex flex-col h-full"
-    >
-      <div className="p-6 flex flex-col flex-grow relative">
+    <Link to={`/lesson/${lesson.id}`}>
+      <motion.div 
+        whileHover={{ y: -5 }}
+        whileTap={{ scale: 0.98 }}
+        className={`group bg-bg-surface dark:bg-bg-card-dark rounded-2xl border ${isCompleted ? 'border-green-500/50 dark:border-green-500/50' : 'border-darker-white dark:border-gray-700'} shadow-sm hover:shadow-xl hover:border-brand-blue/30 dark:hover:border-sky-500/30 transition-all duration-300 overflow-hidden flex flex-col h-full relative`}
+      >
+        <div className="p-6 flex flex-col flex-grow relative">
+          {/* Completed Badge */}
+        {isCompleted && (
+          <div className="absolute top-6 right-6 text-green-500 dark:text-green-400 z-10" title="مكتمل">
+            <CheckCircle size={24} className="fill-green-100 dark:fill-green-900" />
+          </div>
+        )}
+
         {/* Lesson Number Badge */}
         <div className="absolute top-6 left-6 w-10 h-10 rounded-full bg-brand-blue-light dark:bg-sky-900/40 flex items-center justify-center text-brand-blue dark:text-sky-400 font-bold text-lg border border-brand-blue/20 dark:border-sky-500/20 group-hover:bg-brand-blue group-hover:text-white dark:group-hover:bg-sky-500 dark:group-hover:text-white transition-colors">
           {lesson.number}
@@ -44,11 +55,12 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson }) => {
               <span>ملف</span>
             </div>
           </div>
-          <div className="mr-auto text-brand-blue dark:text-sky-400 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all">
+                    <div className="mr-auto text-brand-blue dark:text-sky-400 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all">
             <ChevronLeft size={20} />
           </div>
         </div>
       </div>
+      </motion.div>
     </Link>
   );
 };

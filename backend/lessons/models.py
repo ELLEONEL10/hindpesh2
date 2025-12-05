@@ -101,3 +101,28 @@ class PDFFile(models.Model):
 
     def __str__(self):
         return f"PDF: {self.lesson.title} - {self.title}"
+
+
+class UserProgress(models.Model):
+    """Model for tracking user progress on lessons"""
+    user = models.ForeignKey(
+        'auth.User',
+        on_delete=models.CASCADE,
+        related_name='progress'
+    )
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.CASCADE,
+        related_name='user_progress'
+    )
+    is_completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    last_accessed = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'lesson')
+        verbose_name = "User Progress"
+        verbose_name_plural = "User Progress"
+
+    def __str__(self):
+        return f"{self.user.username} - {self.lesson.title}"

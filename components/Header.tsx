@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
-import { Menu, X, BookOpen, Sun, Moon } from 'lucide-react';
+import { Menu, X, BookOpen, Sun, Moon, Search, LogIn, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { APP_NAME_AR, APP_NAME_EN } from '../constants';
+import { useAuth } from '../context/AuthContext';
 
 interface HeaderProps {
   isDarkMode: boolean;
   toggleTheme: () => void;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleTheme }) => {
+const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleTheme, searchTerm, setSearchTerm }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   return (
     <header className="bg-white dark:bg-bg-card-dark shadow-sm sticky top-0 z-50 transition-colors duration-300 border-b border-brand-grey-light dark:border-gray-700">
@@ -50,6 +54,22 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleTheme }) => {
             </div>
           </Link>
 
+          {/* Search Bar (Desktop) */}
+          <div className="hidden md:flex flex-1 max-w-md mx-8">
+            <div className="relative w-full">
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                className="block w-full pr-10 pl-3 py-2 border border-gray-300 dark:border-gray-600 rounded-full leading-5 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue sm:text-sm transition-colors"
+                placeholder="بحث عن درس..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
           {/* Actions & Navigation */}
           <div className="flex items-center gap-4">
             
@@ -75,6 +95,30 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleTheme }) => {
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
 
+            {/* Auth Section */}
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden md:block">
+                  {user.first_name || user.username}
+                </span>
+                <button
+                  onClick={logout}
+                  className="p-2 rounded-full text-brand-grey dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-red-500 transition-all"
+                  title="تسجيل الخروج"
+                >
+                  <LogOut size={20} />
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-brand-blue text-white hover:bg-brand-blue-dark transition-colors text-sm font-bold"
+              >
+                <LogIn size={18} />
+                <span className="hidden md:inline">دخول</span>
+              </Link>
+            )}
+
             {/* Mobile Menu Button */}
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -89,7 +133,21 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleTheme }) => {
       {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-white dark:bg-bg-card-dark border-t border-brand-grey-light dark:border-gray-700 py-2">
-          <div className="px-4 space-y-2">
+          <div className="px-4 space-y-4 py-2">
+            {/* Search Bar (Mobile) */}
+            <div className="relative w-full">
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                className="block w-full pr-10 pl-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg leading-5 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue sm:text-sm transition-colors"
+                placeholder="بحث عن درس..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
              <Link 
               to="/" 
               onClick={() => setIsMenuOpen(false)}

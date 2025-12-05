@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Download, FileText, Info, Music } from 'lucide-react';
+import { ArrowRight, Download, FileText, Info, Music, CheckCircle, Circle } from 'lucide-react';
 import { lessonsAPI } from '../services/api';
 import { Lesson, AudioFile, PDFFile } from '../types';
 import AudioPlayer from '../components/AudioPlayer';
 import { convertGoogleDriveLink, getGoogleDriveDownloadLink, getGoogleDriveAudioStreamUrl } from '../utils/googleDrive';
+import { useAuth } from '../context/AuthContext';
 
 const LessonDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -12,6 +13,8 @@ const LessonDetailPage: React.FC = () => {
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, token } = useAuth();
+  const [isCompleted, setIsCompleted] = useState(false);
 
   useEffect(() => {
     // Scroll to top on mount
@@ -34,6 +37,48 @@ const LessonDetailPage: React.FC = () => {
 
     fetchLesson();
   }, [id]);
+
+  useEffect(() => {
+    if (user && token && id) {
+       fetch('http://localhost:8000/api/progress/', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const completed = data.find((p: any) => p.lesson === parseInt(id));
+          if (completed && completed.is_completed) {
+            setIsCompleted(true);
+          }
+        }
+      })
+      .catch(err => console.error(err));
+    }
+  }, [user, token, id]);
+
+  const toggleCompletion = async () => {
+    if (!user || !token || !lesson) return;
+    
+    const newStatus = !isCompleted;
+    setIsCompleted(newStatus);
+
+    try {
+      await fetch('http://localhost:8000/api/progress/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          lesson: lesson.id,
+          is_completed: newStatus
+        })
+      });
+    } catch (err) {
+      console.error(err);
+      setIsCompleted(!newStatus);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -86,9 +131,26 @@ const LessonDetailPage: React.FC = () => {
                 الدرس {lesson.number}
               </span>
            </div>
-           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mt-2 mb-4">
-             {lesson.title}
-           </h1>
+           
+           <div className="flex items-center justify-between flex-wrap gap-4 mt-2 mb-4">
+              <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white">
+                {lesson.title}
+              </h1>
+              {user && (
+                  <button
+                    onClick={toggleCompletion}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-colors ${
+                      isCompleted 
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                        : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200'
+                    }`}
+                  >
+                    {isCompleted ? <CheckCircle size={20} /> : <Circle size={20} />}
+                    <span className="hidden sm:inline">{isCompleted ? 'مكتمل' : 'تحديد كمكتمل'}</span>
+                  </button>
+                )}
+           </div>
+
            <p className="text-lg text-brand-grey dark:text-gray-300 leading-relaxed max-w-3xl">
              {lesson.description}
            </p>

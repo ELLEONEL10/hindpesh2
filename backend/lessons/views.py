@@ -2,15 +2,21 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.views import APIView
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
-from .models import Lesson, AudioFile, PDFFile
+from rest_framework_simplejwt.tokens import RefreshToken
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+from .models import Lesson, AudioFile, PDFFile, UserProgress
 from .serializers import (
     LessonSerializer, 
     AudioFileSerializer, 
     PDFFileSerializer,
     AudioFileCreateSerializer,
-    PDFFileCreateSerializer
+    PDFFileCreateSerializer,
+    UserProgressSerializer
 )
 
 
@@ -126,6 +132,72 @@ class PDFFileViewSet(viewsets.ModelViewSet):
     queryset = PDFFile.objects.all()
     serializer_class = PDFFileSerializer
     permission_classes = [IsAuthenticated]
+
+
+class GoogleLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        token = request.data.get('token')
+        if not token:
+            return Response({'error': 'No token provided'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Verify token
+            idinfo = id_token.verify_oauth2_token(token, google_requests.Request())
+            
+            # Get user info
+            email = idinfo['email']
+            first_name = idinfo.get('given_name', '')
+            last_name = idinfo.get('family_name', '')
+            
+            # Get or create user
+            user, created = User.objects.get_or_create(username=email, defaults={
+                'email': email,
+                'first_name': first_name,
+                'last_name': last_name
+            })
+            
+            # Generate JWT
+            refresh = RefreshToken.for_user(user)
+            
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user': {
+                    'username': user.username,
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name
+                }
+            })
+            
+        except ValueError as e:
+            return Response({'error': f'Invalid token: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProgressViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserProgressSerializer
+    
+    def get_queryset(self):
+        return UserProgress.objects.filter(user=self.request.user)
+        
+    def create(self, request, *args, **kwargs):
+        lesson_id = request.data.get('lesson')
+        is_completed = request.data.get('is_completed', True)
+        
+        if not lesson_id:
+             return Response({'error': 'Lesson ID required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        progress, created = UserProgress.objects.update_or_create(
+            user=request.user,
+            lesson_id=lesson_id,
+            defaults={'is_completed': is_completed}
+        )
+        
+        serializer = self.get_serializer(progress)
+        return Response(serializer.data)
 
     def get_queryset(self):
         lesson_id = self.request.query_params.get('lesson', None)

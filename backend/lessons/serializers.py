@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Lesson, AudioFile, PDFFile
+from .models import Lesson, AudioFile, PDFFile, UserProgress
 
 
 class AudioFileSerializer(serializers.ModelSerializer):
@@ -57,11 +57,19 @@ class AudioFileCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating AudioFile"""
     class Meta:
         model = AudioFile
-        fields = ['lesson', 'title', 'google_drive_link', 'order']
+        fields = ['title', 'google_drive_link', 'order']
 
 
 class PDFFileCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating PDFFile"""
     class Meta:
         model = PDFFile
-        fields = ['lesson', 'title', 'google_drive_link', 'order']
+        fields = ['title', 'google_drive_link', 'order']
+
+
+class UserProgressSerializer(serializers.ModelSerializer):
+    """Serializer for UserProgress model"""
+    class Meta:
+        model = UserProgress
+        fields = ['id', 'lesson', 'is_completed', 'completed_at', 'last_accessed']
+        read_only_fields = ['last_accessed']
