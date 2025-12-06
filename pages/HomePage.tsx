@@ -1,29 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import LessonCard from '../components/LessonCard';
 import { SLOGAN, APP_NAME_AR } from '../constants';
 import { lessonsAPI } from '../services/api';
 import { Lesson } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { normalizeArabic } from '../utils/textUtils';
 
 interface HomePageProps {
   searchTerm?: string;
 }
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 }
-};
 
 const HomePage: React.FC<HomePageProps> = ({ searchTerm = '' }) => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -55,7 +41,9 @@ const HomePage: React.FC<HomePageProps> = ({ searchTerm = '' }) => {
       try {
         setIsLoading(true);
         const fetchedLessons = await lessonsAPI.getAll();
-        setLessons(fetchedLessons);
+        // Ensure stable sort by lesson number
+        const sortedLessons = fetchedLessons.sort((a, b) => a.number - b.number);
+        setLessons(sortedLessons);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'فشل تحميل الدروس');
@@ -68,10 +56,15 @@ const HomePage: React.FC<HomePageProps> = ({ searchTerm = '' }) => {
     fetchLessons();
   }, []);
 
-  const filteredLessons = lessons.filter(lesson => 
-    lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (lesson.description && lesson.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredLessons = useMemo(() => {
+    const normalizedSearch = normalizeArabic(searchTerm.toLowerCase());
+    return lessons.filter(lesson => {
+      const normalizedTitle = normalizeArabic(lesson.title.toLowerCase());
+      const normalizedDesc = lesson.description ? normalizeArabic(lesson.description.toLowerCase()) : '';
+      
+      return normalizedTitle.includes(normalizedSearch) || normalizedDesc.includes(normalizedSearch);
+    });
+  }, [lessons, searchTerm]);
 
   return (
     <div className="min-h-screen">
@@ -166,19 +159,26 @@ const HomePage: React.FC<HomePageProps> = ({ searchTerm = '' }) => {
           </div>
         ) : (
           <motion.div 
-            variants={container}
-            initial="hidden"
-            animate="show"
+            layout
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            {filteredLessons.map((lesson) => (
-              <motion.div key={lesson.id} variants={item}>
-                <LessonCard 
-                  lesson={lesson} 
-                  isCompleted={completedLessons.has(Number(lesson.id))}
-                />
-              </motion.div>
-            ))}
+            <AnimatePresence mode="popLayout">
+              {filteredLessons.map((lesson) => (
+                <motion.div 
+                  layout
+                  key={lesson.id} 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <LessonCard 
+                    lesson={lesson} 
+                    isCompleted={completedLessons.has(Number(lesson.id))}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </motion.div>
         )}
       </section>
