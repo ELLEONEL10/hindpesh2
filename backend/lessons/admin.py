@@ -4,9 +4,28 @@ from django.conf import settings
 import qrcode
 from io import BytesIO
 import base64
-from .models import Lesson, AudioFile, PDFFile
+from .models import Lesson, AudioFile, PDFFile, Question, Choice, LessonFAQ
 
 # 1. Define Inline classes FIRST so they are available for LessonAdmin
+class ChoiceInline(admin.TabularInline):
+    model = Choice
+    extra = 2
+    fields = ('text', 'is_correct', 'order')
+    ordering = ('order',)
+
+class QuestionInline(admin.StackedInline):
+    model = Question
+    extra = 0
+    fields = ('text', 'order')
+    ordering = ('order',)
+    show_change_link = True
+
+class LessonFAQInline(admin.StackedInline):
+    model = LessonFAQ
+    extra = 0
+    fields = ('question', 'answer', 'order')
+    ordering = ('order',)
+
 class AudioFileInline(admin.TabularInline):
     model = AudioFile
     extra = 1
@@ -28,7 +47,7 @@ class LessonAdmin(admin.ModelAdmin):
     ordering = ['number']
     
     # These now refer to the classes defined at the top
-    inlines = [AudioFileInline, PDFFileInline]
+    inlines = [AudioFileInline, PDFFileInline, QuestionInline, LessonFAQInline]
     
     readonly_fields = ['created_at', 'updated_at', 'qr_code_display']
     
@@ -117,3 +136,10 @@ class PDFFileAdmin(admin.ModelAdmin):
     list_filter = ['lesson', 'created_at']
     search_fields = ['title', 'lesson__title']
     ordering = ['lesson', 'order']
+
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ['text', 'lesson', 'order']
+    list_filter = ['lesson']
+    search_fields = ['text', 'lesson__title']
+    inlines = [ChoiceInline]

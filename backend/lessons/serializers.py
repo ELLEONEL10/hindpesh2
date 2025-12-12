@@ -1,5 +1,28 @@
 from rest_framework import serializers
-from .models import Lesson, AudioFile, PDFFile, UserProgress
+from .models import Lesson, AudioFile, PDFFile, UserProgress, Question, Choice, LessonFAQ
+
+
+class ChoiceSerializer(serializers.ModelSerializer):
+    """Serializer for Choice model"""
+    class Meta:
+        model = Choice
+        fields = ['id', 'text', 'is_correct', 'order']
+
+
+class QuestionSerializer(serializers.ModelSerializer):
+    """Serializer for Question model"""
+    choices = ChoiceSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Question
+        fields = ['id', 'text', 'order', 'choices']
+
+
+class LessonFAQSerializer(serializers.ModelSerializer):
+    """Serializer for LessonFAQ model"""
+    class Meta:
+        model = LessonFAQ
+        fields = ['id', 'question', 'answer', 'order']
 
 
 class AudioFileSerializer(serializers.ModelSerializer):
@@ -23,6 +46,8 @@ class LessonSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     audio_files = AudioFileSerializer(many=True, read_only=True)
     pdf_files = PDFFileSerializer(many=True, read_only=True)
+    questions = QuestionSerializer(many=True, read_only=True)
+    faqs = LessonFAQSerializer(many=True, read_only=True)
     
     class Meta:
         model = Lesson
@@ -39,6 +64,8 @@ class LessonSerializer(serializers.ModelSerializer):
             'is_active',
             'audio_files',
             'pdf_files',
+            'questions',
+            'faqs',
         ]
         read_only_fields = ['created_at', 'updated_at']
 

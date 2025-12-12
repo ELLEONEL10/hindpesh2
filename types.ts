@@ -14,6 +14,27 @@ export interface PDFFile {
   created_at: string;
 }
 
+export interface Choice {
+  id: number;
+  text: string;
+  is_correct: boolean;
+  order: number;
+}
+
+export interface Question {
+  id: number;
+  text: string;
+  order: number;
+  choices: Choice[];
+}
+
+export interface LessonFAQ {
+  id: number;
+  question: string;
+  answer: string;
+  order: number;
+}
+
 export interface Lesson {
   id: string | number;
   number: number;
@@ -27,6 +48,8 @@ export interface Lesson {
   updated_at?: string;
   audioFiles: AudioFile[];
   pdfFiles: PDFFile[];
+  questions?: Question[];
+  faqs?: LessonFAQ[];
 }
 
 // API response format (snake_case)
@@ -59,6 +82,8 @@ export interface LessonAPIResponse {
   updated_at: string;
   audio_files: AudioFileAPIResponse[];
   pdf_files: PDFFileAPIResponse[];
+  questions?: Question[];
+  faqs?: LessonFAQ[];
 }
 
 export interface Breadcrumb {

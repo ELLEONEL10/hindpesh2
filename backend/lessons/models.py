@@ -126,3 +126,76 @@ class UserProgress(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.lesson.title}"
+
+
+class Question(models.Model):
+    """Model for storing MCQ questions"""
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.CASCADE,
+        related_name='questions',
+        help_text="The lesson this question belongs to"
+    )
+    text = models.TextField(help_text="The question text")
+    order = models.PositiveIntegerField(
+        default=0,
+        help_text="Order of display"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        verbose_name = "Question"
+        verbose_name_plural = "Questions"
+
+    def __str__(self):
+        return f"{self.lesson.title} - {self.text[:50]}"
+
+
+class Choice(models.Model):
+    """Model for storing MCQ choices"""
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        related_name='choices',
+        help_text="The question this choice belongs to"
+    )
+    text = models.CharField(max_length=200, help_text="The choice text")
+    is_correct = models.BooleanField(default=False, help_text="Is this the correct answer?")
+    order = models.PositiveIntegerField(
+        default=0,
+        help_text="Order of display"
+    )
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = "Choice"
+        verbose_name_plural = "Choices"
+
+    def __str__(self):
+        return f"{self.question.text[:30]} - {self.text}"
+
+
+class LessonFAQ(models.Model):
+    """Model for storing additional Q&A shown after quiz"""
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.CASCADE,
+        related_name='faqs',
+        help_text="The lesson this FAQ belongs to"
+    )
+    question = models.TextField(help_text="The question text")
+    answer = models.TextField(help_text="The answer text")
+    order = models.PositiveIntegerField(
+        default=0,
+        help_text="Order of display"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        verbose_name = "Lesson FAQ"
+        verbose_name_plural = "Lesson FAQs"
+
+    def __str__(self):
+        return f"FAQ: {self.lesson.title} - {self.question[:50]}"

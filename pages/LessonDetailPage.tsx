@@ -4,6 +4,8 @@ import { ArrowRight, Download, FileText, Info, Music, CheckCircle, Circle } from
 import { lessonsAPI } from '../services/api';
 import { Lesson, AudioFile, PDFFile } from '../types';
 import AudioPlayer from '../components/AudioPlayer';
+import QuizSection from '../components/QuizSection';
+import FAQSection from '../components/FAQSection';
 import { convertGoogleDriveLink, getGoogleDriveDownloadLink, getGoogleDriveAudioStreamUrl } from '../utils/googleDrive';
 import { useAuth } from '../context/AuthContext';
 
@@ -251,6 +253,22 @@ const LessonDetailPage: React.FC = () => {
             <div className="text-center py-8 text-brand-grey dark:text-gray-400">
               لا توجد ملفات متاحة لهذا الدرس
             </div>
+          )}
+
+          {/* Quiz Section */}
+          {lesson.questions && lesson.questions.length > 0 && (
+            <QuizSection 
+              questions={lesson.questions} 
+              onComplete={(score) => {
+                // Optional: You can save the score to the backend here if needed
+                console.log('Quiz completed with score:', score);
+              }} 
+            />
+          )}
+
+          {/* FAQ Section */}
+          {lesson.faqs && lesson.faqs.length > 0 && (
+            <FAQSection faqs={lesson.faqs} />
           )}
 
         </div>

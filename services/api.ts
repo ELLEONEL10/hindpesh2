@@ -44,6 +44,8 @@ const mapLessonFromAPI = (apiLesson: LessonAPIResponse): Lesson => {
     updated_at: apiLesson.updated_at,
     audioFiles: (apiLesson.audio_files || []).map(mapAudioFileFromAPI),
     pdfFiles: (apiLesson.pdf_files || []).map(mapPDFFileFromAPI),
+    questions: apiLesson.questions || [],
+    faqs: apiLesson.faqs || [],
   };
 };
 
