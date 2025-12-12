@@ -9,24 +9,37 @@ interface QuizSectionProps {
 }
 
 const QuizSection: React.FC<QuizSectionProps> = ({ questions, onComplete }) => {
-  const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
+  const [userAnswers, setUserAnswers] = useState<Record<number, number[]>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(0);
 
   const handleSelectChoice = (questionId: number, choiceId: number) => {
     if (isSubmitted) return;
-    setUserAnswers(prev => ({
-      ...prev,
-      [questionId]: choiceId
-    }));
+    setUserAnswers(prev => {
+      const currentAnswers = prev[questionId] || [];
+      const newAnswers = currentAnswers.includes(choiceId)
+        ? currentAnswers.filter(id => id !== choiceId)
+        : [...currentAnswers, choiceId];
+      
+      return {
+        ...prev,
+        [questionId]: newAnswers
+      };
+    });
   };
 
   const handleSubmit = () => {
     let newScore = 0;
     questions.forEach(q => {
-      const selectedChoiceId = userAnswers[q.id];
-      const correctChoice = q.choices.find(c => c.is_correct);
-      if (correctChoice && selectedChoiceId === correctChoice.id) {
+      const selectedChoiceIds = userAnswers[q.id] || [];
+      const correctChoiceIds = q.choices.filter(c => c.is_correct).map(c => c.id);
+      
+      // Check if arrays have same elements (ignoring order)
+      const isCorrect = 
+        selectedChoiceIds.length === correctChoiceIds.length &&
+        selectedChoiceIds.every(id => correctChoiceIds.includes(id));
+
+      if (isCorrect) {
         newScore++;
       }
     });
@@ -35,7 +48,7 @@ const QuizSection: React.FC<QuizSectionProps> = ({ questions, onComplete }) => {
     onComplete(newScore);
   };
 
-  const allAnswered = questions.every(q => userAnswers[q.id] !== undefined);
+  const allAnswered = questions.every(q => (userAnswers[q.id]?.length || 0) > 0);
 
   if (questions.length === 0) return null;
 
@@ -58,7 +71,7 @@ const QuizSection: React.FC<QuizSectionProps> = ({ questions, onComplete }) => {
             
             <div className="space-y-3">
               {question.choices.map((choice) => {
-                const isSelected = userAnswers[question.id] === choice.id;
+                const isSelected = (userAnswers[question.id] || []).includes(choice.id);
                 const isCorrect = choice.is_correct;
                 
                 let choiceClass = "w-full text-right p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between group ";
@@ -89,8 +102,8 @@ const QuizSection: React.FC<QuizSectionProps> = ({ questions, onComplete }) => {
                     <span className="font-medium">{choice.text}</span>
                     {isSubmitted && isCorrect && <CheckCircle className="w-5 h-5 text-green-500" />}
                     {isSubmitted && isSelected && !isCorrect && <XCircle className="w-5 h-5 text-red-500" />}
-                    {!isSubmitted && isSelected && <div className="w-4 h-4 rounded-full bg-brand-blue dark:bg-sky-500" />}
-                    {!isSubmitted && !isSelected && <div className="w-4 h-4 rounded-full border-2 border-gray-300 dark:border-gray-600 group-hover:border-brand-blue/50" />}
+                    {!isSubmitted && isSelected && <div className="w-4 h-4 rounded bg-brand-blue dark:bg-sky-500 flex items-center justify-center"><CheckCircle className="w-3 h-3 text-white" /></div>}
+                    {!isSubmitted && !isSelected && <div className="w-4 h-4 rounded border-2 border-gray-300 dark:border-gray-600 group-hover:border-brand-blue/50" />}
                   </button>
                 );
               })}

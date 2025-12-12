@@ -4,35 +4,36 @@ from django.conf import settings
 import qrcode
 from io import BytesIO
 import base64
+import nested_admin
 from .models import Lesson, AudioFile, PDFFile, Question, Choice, LessonFAQ
 
 # 1. Define Inline classes FIRST so they are available for LessonAdmin
-class ChoiceInline(admin.TabularInline):
+class ChoiceInline(nested_admin.NestedTabularInline):
     model = Choice
     extra = 4
     fields = ('text', 'is_correct', 'order')
     ordering = ('order',)
 
-class QuestionInline(admin.StackedInline):
+class QuestionInline(nested_admin.NestedStackedInline):
     model = Question
     extra = 0
     fields = ('text', 'order')
     ordering = ('order',)
-    show_change_link = True
+    inlines = [ChoiceInline]
 
-class LessonFAQInline(admin.StackedInline):
+class LessonFAQInline(nested_admin.NestedStackedInline):
     model = LessonFAQ
     extra = 0
     fields = ('question', 'answer', 'order')
     ordering = ('order',)
 
-class AudioFileInline(admin.TabularInline):
+class AudioFileInline(nested_admin.NestedTabularInline):
     model = AudioFile
     extra = 1
     fields = ('title', 'google_drive_link', 'order')
     ordering = ('order',)
 
-class PDFFileInline(admin.TabularInline):
+class PDFFileInline(nested_admin.NestedTabularInline):
     model = PDFFile
     extra = 1
     fields = ('title', 'google_drive_link', 'order')
@@ -40,7 +41,7 @@ class PDFFileInline(admin.TabularInline):
 
 # 2. Define LessonAdmin, using the Inlines defined above
 @admin.register(Lesson)
-class LessonAdmin(admin.ModelAdmin):
+class LessonAdmin(nested_admin.NestedModelAdmin):
     list_display = ['number', 'title', 'duration', 'is_active', 'created_at', 'qr_code_preview']
     list_filter = ['is_active', 'created_at']
     search_fields = ['title', 'description']
@@ -138,7 +139,7 @@ class PDFFileAdmin(admin.ModelAdmin):
     ordering = ['lesson', 'order']
 
 @admin.register(Question)
-class QuestionAdmin(admin.ModelAdmin):
+class QuestionAdmin(nested_admin.NestedModelAdmin):
     list_display = ['text', 'lesson', 'order']
     list_filter = ['lesson']
     search_fields = ['text', 'lesson__title']
