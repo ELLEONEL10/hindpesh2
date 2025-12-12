@@ -9,7 +9,7 @@ from .models import Lesson, AudioFile, PDFFile, Question, Choice, LessonFAQ
 # 1. Define Inline classes FIRST so they are available for LessonAdmin
 class ChoiceInline(admin.TabularInline):
     model = Choice
-    extra = 2
+    extra = 4
     fields = ('text', 'is_correct', 'order')
     ordering = ('order',)
 
